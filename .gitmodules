@@ -1,0 +1,3 @@
+[submodule "submodules/vlonGui"]
+	path = submodules/vlonGui
+	url = git@github.com:emvalon/vlonGui.git
