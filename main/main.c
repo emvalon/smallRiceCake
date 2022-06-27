@@ -2,33 +2,30 @@
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h"
 #include "driver/gpio.h"
 
+#include "encoder.h"
+#include "gui.h"
 
-
+static const char *TAG = "Encoder";
 
 void app_main(void)
 {
-    gpio_config_t gpio_params;
+    BaseType_t res;
 
-    //codec chip power enable
-    gpio_params.pin_bit_mask = BIT22;
-    gpio_params.mode = GPIO_MODE_OUTPUT;
-    gpio_params.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_params.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    gpio_params.intr_type = GPIO_INTR_DISABLE;
-
-    gpio_config(&gpio_params);
-    gpio_set_level(GPIO_NUM_22, 1);
-
-    // gpio_set_direction(18, GPIO_MODE_OUTPUT);
-    // gpio_set_level(18, 1);
-
-    // gpio_set_direction(23, GPIO_MODE_OUTPUT);
-    // gpio_set_level(23, 1);
-
-    while(1) {
-        printf("hello word\n");
-        vTaskDelay(100);
+    /* Encoder task */
+    res = xTaskCreatePinnedToCore(encoder_task_entry, "encoder task", 
+                                  1024 * 2, NULL, configMAX_PRIORITIES - 1, 
+                                  NULL, 1);
+    if (res != pdPASS) {
+        ESP_LOGE(TAG, "fail to create encoder task, %d", res);
+    }
+    /* Gui task */
+    res = xTaskCreatePinnedToCore(gui_task_entry, "gui task", 
+                                  1024 * 4, NULL, 1, 
+                                  NULL, 1);
+    if (res != pdPASS) {
+        ESP_LOGE(TAG, "fail to create gui task, %d", res);
     }
 }
