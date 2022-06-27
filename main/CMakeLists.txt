@@ -13,6 +13,9 @@ list(APPEND src
     "src/vlonGui_ssd1306.c"
     "src/encoder.c"
     "src/gui.c"
+    "src/webServer.c"
+    "src/wifiStation.c"
+    "src/ota.c"
 )
 
 idf_component_register(SRCS "${src}"
