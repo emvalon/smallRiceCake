@@ -3,168 +3,124 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "vlonGui.h"
-#include "vlonGui_msgBox.h"
-#include "vlonGui_window.h"
-#include "vlonGui_input.h"
-#include "vlonGui_button.h"
-#include "vlonGui_selector.h"
-#include "vlonGui_progressBar.h"
-#include "bitmap.h"
-// #include "../games.h"
-
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/message_buffer.h"
+
+#include "stdio.h"
+#include "vlonGui.h"
+#include "vlonGui_window.h"
+#include "vlonGui_input.h"
+#include "vlonGui_port.h"
+#include "vlonGui_menu.h"
+#include "vlonGui_input.h"
+#include "sleep.h"
+
+#include "gui.h"
+
+#include "rightArrow.h"
+#include "leftArrow.h"
+#include "btIcon.h"
+
+#define TAG     "GUI"
 
 struct vlonGui_t screen;
-struct vlonGui_msgBox_t *msgbox;
-struct vlonGui_window_t *mainWin, *win, *topWin;
-struct vlonGui_button_t *btn;
-struct vlonGui_selector_t *sel;
-struct vlonGui_progressBar_t *progBar;
+struct vlonGui_window_t *mainWin;
+MessageBufferHandle_t gui_message;
 
-static bool showIconName = true;
-volatile int8_t pos = 0;
+static uint8_t g_battery_level = 0;
+static uint8_t battery_charging = 0;
 
+static void
+menuBarDrawCb(struct vlonGui_window_t *win, void *arg)
+{
+    vlonGui_windowClear(win);
+    vlonGui_drawRectangle(win, 110, 1, 12, 7, VLGUI_COLOR_WHITE);
+    vlonGui_drawLine(win, 109, 3, 109, 5, 2, VLGUI_COLOR_WHITE);
 
-static uint8_t presskey = VLGUI_KEY_RIGHT;
+    for (uint8_t i = 0; i < g_battery_level; i++) {
+        vlonGui_drawLine(win, 118 - (i * 3), 3, 
+                         118 - (i * 3), 5, 2, VLGUI_COLOR_WHITE);
+    }
+
+    for (uint8_t i = 0; i < 3; i++) {
+        vlonGui_drawLine(win, 100 + (i * 2), 6 - (i * 2), 
+                         100 + (i * 2), 7, 
+                         1, VLGUI_COLOR_WHITE);
+    }
+}
 
 static void 
 mainWindowDrawCb(struct vlonGui_window_t *win, void *arg)
 {
-    int16_t x;
-    
     vlonGui_windowClear(win);
-    x = 12;
-    vlonGui_drawBitmap(win, x, 4, 40, 40, bitmap_game);
-    x += 128;
-    vlonGui_drawBitmap(win, x, 4, 40, 40, bitmap_setting);
-    x += 128;
-    vlonGui_drawBitmap(win, x, 4, 40, 40, bitmap_connect);
-    x += 128;
-    vlonGui_drawBitmap(win, x, 4, 40, 40, bitmap_info);
-    x += 128;
-    vlonGui_drawBitmap(win, x, 4, 40, 40, bitmap_media);
-}
 
-static void 
-topWindowDrawCb(struct vlonGui_window_t *win, void *arg)
-{
-    uint8_t w,h;
-    int16_t x;
-    char *str;
+    vlonGui_drawBitmap(win, 0, 10, 20, 30, leftArrow);
+    vlonGui_drawBitmap(win, 108, 10, 20, 30, rightArrow);
+    vlonGui_drawBitmap(win, 49, 0, 30, 30, btIcon);
 
-    w = 10;
-    h = 5;
-    x = (128 - 5 * w) >> 1;
-
-    for(uint8_t i = 0; i < 5; i++) {
-        if(i == pos) {  
-            vlonGui_drawBlock(win, x + i * w, 64 - h, w, h, 1);
-        } else {
-            vlonGui_drawRectangle(win, x + i * w, 64 - h, w, h, 1);
-        }
-    }
-
-    vlonGui_drawLine(win, 63, 4, 63, 44, 2, 1);
-
-    if(!showIconName) {
-        return;
-    }
-
-    vlonGui_setFont(&vlonGui_font11x18);
-    switch (pos)
-    {
-    case 0:
-        str = "Game";
-        break;
-    case 1:
-        str = "Set";
-        break;
-    case 2:
-        str = "Conn";
-        break;
-    case 3:
-        str = "Info";
-        break;
-    case 4:
-        str = "Media";
-        break;
-    default:
-        str = "None";
-        break;
-    }
-
-    x = 96 - ((strlen(str) * vlonGui_font11x18.FontWidth) >> 1);
-
-    vlonGui_drawString(win, x, 20, str, 1);
-}
-
-static void 
-drawIconName(void *arg)
-{
-   showIconName = true;
+    vlonGui_setFont(vlonGui_wenquan_9pt);
+    vlonGui_drawString(win, 40, 35, "À¶ÑÀÉèÖÃ", VLGUI_COLOR_WHITE);
 }
 
 int 
 mainWindowProcessKeyCb(struct vlonGui_window_t *win, uint8_t key)
 {
+    struct vlonGui_menu_t *menu;
+
     switch (key)
     {
-    case VLGUI_KEY_LETF:
-        if(pos) {
-            --pos;
-            showIconName = false;
-            vlonGui_windowScrollAnimation(win, 128, 0, 500, drawIconName, NULL);
-        } else {
-            presskey = VLGUI_KEY_RIGHT;
+    case VLGUI_KEY_OK:
+        menu = vlonGui_menuCreate(win, 0, 0, win->win_width, win->win_height);
+        printf("menu:%p\n", menu);
+        if (!menu) {
+            break;
         }
-        
+        vlonGui_menuSetFont(menu, vlonGui_wenquan_9pt);
+        vlonGui_menuAddEntry(menu, 0, 0, "À¶ÑÀÒôÏì");
+        vlonGui_menuAddEntry(menu, 1, 1, "¿ªÆô");
+        vlonGui_menuAddEntry(menu, 2, 1, "¹Ø±Õ");
+        vlonGui_menuAddEntry(menu, 3, 0, "À¶ÑÀÒ£¿ØÆ÷");
+        vlonGui_menuAddEntry(menu, 4, 1, "¿ªÆô");
+        vlonGui_menuAddEntry(menu, 5, 1, "¹Ø±Õ");
+        printf("done menu\n");
         break;
     case VLGUI_KEY_RIGHT:
-        if(pos < 4) {
-            ++pos;
-            showIconName = false;
-            vlonGui_windowScrollAnimation(win, -128, 0, 500, drawIconName, NULL);
-        } else {
-            presskey = VLGUI_KEY_LETF;
-        }
+        vlonGui_turnOnOff(&screen, 0);
+        deep_sleep_enter();
+        vlonGui_turnOnOff(&screen, 1);
         break;
-    case VLGUI_KEY_OK:
-        switch (pos)
-        {
-        case 0: 
-            // games_createSelector(win);
-
-            break;
-        case 1:
-            btn = vlonGui_buttonCreate(win, 40, 20, 30, 16);
-            break;
-        case 2:
-            // sel = vlonGui_selectorCreate(win);
-            // vlonGui_selectorAddEntry(sel, "Shen Weilong");
-            // vlonGui_selectorAddEntry(sel, "Valon Shen");
-            // vlonGui_selectorAddEntry(sel, "Ma Suhong");
-            // vlonGui_selectorAddEntry(sel, "Suhon Ma");
-            // vlonGui_selectorAddEntry(sel, "VlonGui");
-            msgbox = vlonGui_msgBoxCreate(win);
-            break;
-        case 3:
-            progBar = vlonGui_progressBarCreate(win, 10, 15, 108, 34);
-            vlonGui_progressBarSetValue(progBar, 0);
-        default:
-            break;
-        }
     default:
         break;
     }
-
     return 0;
+}
+
+void 
+gui_set_battery_level(uint8_t lvl)
+{
+    if (lvl >= 3) {
+        g_battery_level = 3;
+    } else {
+        g_battery_level = lvl;
+    }
 }
 
 void 
 gui_task_entry(void *arg)
 {
+    struct vlonGui_window_t *win;
+    uint8_t message[GUI_MESSAGE_SIZE_MAX];
+    size_t message_len;
+
+    gui_message = xMessageBufferCreate(200);
+    if (!gui_message) {
+        ESP_LOGE(TAG, "Failed to create message");
+        vTaskDelete(NULL);
+        return;
+    }
+
     memset(&screen, 0, sizeof(screen));
 
     vlonGui_inputInit();
@@ -173,20 +129,29 @@ gui_task_entry(void *arg)
     vlonGui_register_driver(&screen, vlonGui_portGetDriver());
 
     mainWin = vlinGui_getMainWindow(&screen);
+    vlonGui_windowSetDrawCb(mainWin, menuBarDrawCb);
 
-    win = vlonGui_windowCreate(mainWin, 0, 0, mainWin->win_width, mainWin->win_height, 0);
+    win = vlonGui_windowCreate(mainWin, 0, 10, mainWin->win_width, mainWin->win_height, 0);
     vlonGui_windowSetDrawCb(win, mainWindowDrawCb);
     vlonGui_windowSetKeyCb(win, mainWindowProcessKeyCb);
 
-    topWin = vlonGui_windowCreate(mainWin, 0, 0, win->win_width, win->win_height, 0);
-    vlonGui_windowSetDrawCb(topWin, topWindowDrawCb);
-
-    // msgbox = vlonGui_msgBoxCreate(vlinGui_getMainWindow(&screen));
-    // vlonGui_msgBoxSetTitle(msgbox, "TestTitle");
-    // vlonGui_msgBoxSetText(msgbox, "Warning: test");
-
     while (true) {
         vlonGui_refresh();
-        vTaskDelay(100);
+        message_len = xMessageBufferReceive(gui_message, message, sizeof(message), pdMS_TO_TICKS(20));
+        if (!message_len) {
+            continue;
+        }
+
+        switch (message[0]) {
+        case GUI_MESSAGE_BATTERY:
+            g_battery_level = message[1];
+            battery_charging = message[2];
+            vlonGui_windowSetRefresh(mainWin);
+            printf("new levle:%d\n", g_battery_level);
+            break;
+        
+        default:
+            break;
+        }
     }
 }

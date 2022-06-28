@@ -24,8 +24,8 @@ static const char *TAG = "webServer";
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID      "esp32_wb_server"
-#define EXAMPLE_ESP_WIFI_PASS      "123456789."
+#define EXAMPLE_ESP_WIFI_SSID      "valon2.4G"
+#define EXAMPLE_ESP_WIFI_PASS      "cmpf42ea"
 #define EXAMPLE_ESP_WIFI_CHANNEL   0
 #define EXAMPLE_MAX_STA_CONN       2
 
@@ -265,7 +265,7 @@ static esp_err_t ctrl_put_handler(httpd_req_t *req)
     if (memcmp(buf, "start", 5) == 0) {
         ESP_LOGI(TAG, "Upgrade cntl: start");
         
-        ota_upgradeStart(0);
+        ota_upgradeStart(atoi(&buf[5]));
     } else if (memcmp(buf, "done", 4) == 0) {
         ESP_LOGI(TAG, "Upgrade cntl: done");
 
@@ -350,7 +350,7 @@ webServer_task_entry(void *arg)
     /* Ensure to disable any WiFi power save mode, this allows best throughput
      * and hence timings for overall OTA operation.
      */
-    esp_wifi_set_ps(WIFI_PS_NONE);
+    // esp_wifi_set_ps(WIFI_PS_NONE);
 
     /* Start the server for the first time */
     server = start_webserver();
