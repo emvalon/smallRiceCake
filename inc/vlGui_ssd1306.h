@@ -1,5 +1,5 @@
-#ifndef _VLONGUI_SSD1306_H_
-#define __VLONGUI_SSD1306_H_
+#ifndef _vlGui_SSD1306_H_
+#define __vlGui_SSD1306_H_
 
 #include <stdint.h>
 

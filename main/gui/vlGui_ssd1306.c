@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "vlonGui_ssd1306.h"
+#include "vlGui_ssd1306.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
