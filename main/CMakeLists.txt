@@ -1,19 +1,5 @@
 list(APPEND src
-    "../submodules/vlonGui/src/vlonGui_base.c"
-    "../submodules/vlonGui/src/vlonGui_button.c"
-    "../submodules/vlonGui/src/vlonGui_input.c"
-    "../submodules/vlonGui/src/vlonGui_menu.c"
-    "../submodules/vlonGui/src/vlonGui_msgBox.c"
-    "../submodules/vlonGui/src/vlonGui_progressBar.c"
-    "../submodules/vlonGui/src/vlonGui_selector.c"
-    "../submodules/vlonGui/src/vlonGui_window.c"
-    "../submodules/vlonGui/src/vlonGui.c"
-    "../submodules/vlonGui/src/fonts/vlonGui_fonts.c"
-    "../submodules/vlonGui/src/fonts/vlonGui_wenquan_9pt.c"
-    "src/vlonGui_port.c"
-    "src/vlonGui_ssd1306.c"
     "src/encoder.c"
-    "src/gui.c"
     "src/webServer.c"
     "src/wifiStation.c"
     "src/ota.c"
@@ -23,11 +9,15 @@ list(APPEND src
     "../submodules/flexibleButton/flexible_button.c"
 )
 
-idf_component_register(SRCS "${src}"
+file(GLOB GUI_SRC   "./gui/*.c" 
+                    "./gui/pictures/*.c")
+file(GLOB VLGUI_SRC "../submodules/vlGui/src/*.c" 
+                    "../submodules/vlGui/src/fonts/*.c")
+
+idf_component_register(SRCS "${src}" "${GUI_SRC}" "${VLGUI_SRC}"
                     "main.c" 
-                    INCLUDE_DIRS "inc/"
-                    "../submodules/vlonGui/inc/"
-                    "../submodules/vlonGui/port/inc/"
-                    "../submodules/flexibleButton/"
-                    )
+                    INCLUDE_DIRS "../inc/"
+                    "../submodules/vlGui/inc/"
+                    "../submodules/vlGui/port/inc/"
+                    "../submodules/flexibleButton/")
 

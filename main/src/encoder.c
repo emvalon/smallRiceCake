@@ -8,7 +8,7 @@
 #include "driver/gpio.h"
 
 #include "flexible_button.h"
-#include "vlonGui_input.h"
+#include "vlGui_input.h"
 
 #define ENCODER_A_PIN       (27)
 #define ENCODER_B_PIN       (14)
@@ -39,10 +39,10 @@ encoder_btn_evt_cb(void *arg)
     switch (evt)
     {
     case FLEX_BTN_PRESS_CLICK:
-        vlonGui_inputEnqueueKey(VLGUI_KEY_OK);
+        vlGui_inputEnqueueKey(VLGUI_KEY_OK);
         break;
     case FLEX_BTN_PRESS_DOUBLE_CLICK:
-        vlonGui_inputEnqueueKey(VLGUI_KEY_ESC);
+        vlGui_inputEnqueueKey(VLGUI_KEY_ESC);
         break;
     default:
         break;
@@ -143,9 +143,9 @@ encoder_task_entry(void *arg)
                 if (debounce >= DEBOUNCE_CNT) {
                     if (direction) {
                         ++cnt;
-                        vlonGui_inputEnqueueKey(VLGUI_KEY_RIGHT);
+                        vlGui_inputEnqueueKey(VLGUI_KEY_RIGHT);
                     } else {
-                        vlonGui_inputEnqueueKey(VLGUI_KEY_LETF);
+                        vlGui_inputEnqueueKey(VLGUI_KEY_LEFT);
                         --cnt;
                     }
                     break;
