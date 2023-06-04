@@ -22,6 +22,7 @@
  */
 #include "vlonGui.h"
 #include "vlonGui_port.h"
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
@@ -29,6 +30,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "vlonGui_ssd1306.h"
 
@@ -49,15 +51,46 @@ uint32_t vlonGui_getTime(void)
     return xTaskGetTickCount();
 }
 
-// static void vlonGui_portDrawPixel(uint16_t x, uint16_t y, uint8_t color)
-// {
-//     ssd1306_DrawPixel(x, y, color);
-// }
+void *
+vlonGui_protSemphrCreate(void)
+{
+    return NULL;
+}
+
+void 
+vlonGui_protSemphrDestroy(void *semphr)
+{
+
+}
+
+void 
+vlonGui_portSemphrTake(void *semphr, uint32_t delay_time)
+{
+
+}
+
+void 
+vlonGui_portSemphrGive(void *semphr)
+{
+
+}
+
+static vlonGui_color 
+vlonGui_portGetPixel(uint16_t x, uint16_t y)
+{
+    if (ssd1306_getPixel((uint8_t)x, (uint8_t)y) == White) {
+        return VLGUI_COLOR_WHITE;
+    } else {
+        return VLGUI_COLOR_BLACK;
+    }
+}
 
 struct vlonGui_driver_t * vlonGui_portGetDriver(void)
 {
+    memset(&vlonGui_driver, 0, sizeof(vlonGui_driver));
     vlonGui_driver.pInit = ssd1306_Init;
     vlonGui_driver.pDrawPoint = ssd1306_DrawPixel;
+    vlonGui_driver.pGetPointColor = vlonGui_portGetPixel;
     vlonGui_driver.pFresh = ssd1306_UpdateScreen;
 
     return &vlonGui_driver;
