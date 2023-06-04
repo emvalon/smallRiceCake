@@ -9,6 +9,7 @@ list(APPEND src
     "../submodules/vlonGui/src/vlonGui_window.c"
     "../submodules/vlonGui/src/vlonGui.c"
     "../submodules/vlonGui/src/fonts/vlonGui_fonts.c"
+    "../submodules/vlonGui/src/fonts/vlonGui_wenquan_9pt.c"
     "src/vlonGui_port.c"
     "src/vlonGui_ssd1306.c"
     "src/encoder.c"
@@ -16,11 +17,17 @@ list(APPEND src
     "src/webServer.c"
     "src/wifiStation.c"
     "src/ota.c"
+    "src/btSink.c"
+    "src/sleep.c"
+    "src/battery.c"
+    "../submodules/flexibleButton/flexible_button.c"
 )
 
 idf_component_register(SRCS "${src}"
                     "main.c" 
                     INCLUDE_DIRS "inc/"
                     "../submodules/vlonGui/inc/"
-                    "../submodules/vlonGui/port/inc/")
+                    "../submodules/vlonGui/port/inc/"
+                    "../submodules/flexibleButton/"
+                    )
 

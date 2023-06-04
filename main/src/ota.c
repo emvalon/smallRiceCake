@@ -9,6 +9,8 @@
 static const esp_partition_t * partition;
 static esp_ota_handle_t handle;
 static uint32_t offset;
+static size_t imageSize; 
+static uint8_t percentage;
 
 
 void
@@ -16,7 +18,7 @@ ota_upgradeStart(size_t size)
 {
     esp_err_t err;
 
-    ESP_LOGI(TAG, "ota_upgradeStart");
+    ESP_LOGI(TAG, "ota_upgradeStart, size:%d", size);
 
     offset = 0;
     partition = esp_ota_get_next_update_partition(NULL);
@@ -30,6 +32,9 @@ ota_upgradeStart(size_t size)
         ESP_LOGW(TAG, "Partition Erase error:%d", err);
         partition = NULL;
     }
+
+    imageSize = size;
+    percentage = 0;
 }
 
 void
@@ -46,8 +51,8 @@ void
 ota_recvData(uint8_t *data, uint32_t len)
 {
     esp_err_t err;
+    uint8_t localPrecent;
 
-    ESP_LOGI(TAG, "ota_recvData, %d", len);
 
     if (partition) {
         err = esp_ota_write_with_offset(handle, data, len, offset);
@@ -56,6 +61,11 @@ ota_recvData(uint8_t *data, uint32_t len)
             partition = NULL;
         }
         offset += len;
+        localPrecent = (uint8_t)(offset * 100 / imageSize);
+        if (localPrecent != percentage) {
+            ESP_LOGI(TAG, "%d%%", localPrecent);
+            percentage = localPrecent;
+        }
     } else {
         ESP_LOGI(TAG, "no partition");
     }

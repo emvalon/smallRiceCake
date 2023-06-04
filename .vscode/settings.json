@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "vlongui.h": "c",
+        "flexible_button.h": "c",
+        "sleep.h": "c",
+        "vlongui_config.h": "c",
+        "vlongui_port.h": "c",
+        "*.h":"c",
+    }
+}

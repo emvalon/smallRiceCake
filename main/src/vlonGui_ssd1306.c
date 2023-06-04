@@ -27,7 +27,6 @@
 #define SSD_CS_PIN          (2)
 #define SSD_DC_PIN          (12)
 #define SSD_CLK_PIN         (32)
-#define SSD_MISO_PIN        (34)
 #define SSD_MOSI_PIN        (33)
 
 static spi_device_handle_t spi;
@@ -71,12 +70,11 @@ void ssd1306_WriteCommand(uint8_t byte)
     esp_err_t ret;
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));       //Zero out the transaction
-    t.length=1;                     //Command is 8 bits
+    t.length=8;                     //Command is 8 bits
     t.tx_buffer=&byte;               //The data is the cmd itself
     t.user=(void*)0;                //D/C needs to be set to 0
     ret=spi_device_polling_transmit(spi, &t);  //Transmit!
     assert(ret==ESP_OK);            //Should have had no issues.
-    
 }
 
 // Send data
@@ -91,7 +89,7 @@ void ssd1306_WriteData(uint8_t* buffer, size_t buff_size)
     esp_err_t ret;
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));       //Zero out the transaction
-    t.length=buff_size;                     //Command is 8 bits
+    t.length=buff_size * 8;                     //Command is 8 bits
     t.tx_buffer=buffer;               //The data is the cmd itself
     t.user=(void*)1;                //D/C needs to be set to 1
     ret=spi_device_polling_transmit(spi, &t);  //Transmit!
@@ -101,7 +99,7 @@ void ssd1306_WriteData(uint8_t* buffer, size_t buff_size)
 void ssd1306_Reset(void) 
 {
     // printf("%s\n", __func__);
-    gpio_set_level(SSD_CS_PIN, 1);
+    // gpio_set_level(SSD_CS_PIN, 1);
 
     gpio_set_level(SSD_RST_PIN, 0);
     vTaskDelay(100 / portTICK_RATE_MS);
@@ -181,12 +179,13 @@ void ssd1306_UpdateScreen(void)
     //  * 64px   ==  8 pages
     //  * 128px  ==  16 pages
     // Set the current RAM page address.
-    ssd1306_WriteCommand(0xB0 ); 
+    ssd1306_WriteCommand(0xB0); 
     ssd1306_WriteCommand(0x00);
     ssd1306_WriteCommand(0x10);
-    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
-        ssd1306_WriteData(&SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
-    }
+    ssd1306_WriteData(SSD1306_Buffer, sizeof(SSD1306_Buffer));
+    // for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
+    //     ssd1306_WriteData(&SSD1306_Buffer[SSD1306_WIDTH*i], SSD1306_WIDTH);
+    // }
 }
 
 //    Draw one pixel in the screenbuffer
@@ -216,6 +215,15 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color)
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
     }
 }
+
+SSD1306_COLOR ssd1306_getPixel(uint8_t x, uint8_t y)
+{
+    if (SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] & (1 << (y % 8))) {
+        return White;
+    } else {
+        return Black;
+    }
+} 
 
 // Draw 1 char to the screen buffer
 // ch       => char om weg te schrijven
@@ -472,20 +480,19 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 {
     int dc=(int)t->user;
     
-    // ets_printf("%s\n", __func__);
+    // printf("%s\n", __func__);
     gpio_set_level(SSD_DC_PIN, dc);
 }
 
 // Initialize the oled screen
-void ssd1306_Init(void) 
+void ssd1306_Init(uint8_t display) 
 {
-    // i2c_dev = device_get_binding(DISP_DEV);
-	// if (!i2c_dev) {
-	// 	printk("SSD1306 bus found.\n");
-	// 	return;
-	// }
-    
-    // printf("%s\n", __func__);
+
+    if (SSD1306.Initialized) {
+        ssd1306_SetDisplayOn(display);
+        return;
+    }
+
     esp_err_t ret;
     spi_bus_config_t buscfg={
         .miso_io_num = -1,
@@ -493,19 +500,23 @@ void ssd1306_Init(void)
         .sclk_io_num = SSD_CLK_PIN,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = 32,
+        .max_transfer_sz = 1024,
     };
+
     //Initialize the SPI bus
     ret = spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     ESP_ERROR_CHECK(ret);
-
+    
+    
+    gpio_reset_pin(SSD_RST_PIN);
+    gpio_reset_pin(SSD_DC_PIN);
     gpio_set_direction(SSD_DC_PIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(SSD_RST_PIN, GPIO_MODE_OUTPUT);
 
     spi_device_interface_config_t devcfg={
-        .clock_speed_hz=100*1000,           //Clock out at 10 MHz
+        .clock_speed_hz= 10 * 1000000,           //Clock out at 10 MHz
         .mode=0,                                //SPI mode 0
-        .spics_io_num=SSD_CS_PIN,               //CS pin
+        .spics_io_num = SSD_CS_PIN,               //CS pin
         .queue_size=15,                          //We want to be able to queue 7 transactions at a time
         .pre_cb=lcd_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
@@ -611,4 +622,5 @@ void ssd1306_Init(void)
     SSD1306.CurrentY = 0;
     
     SSD1306.Initialized = 1;
+    printf("oled init done\n");
 }

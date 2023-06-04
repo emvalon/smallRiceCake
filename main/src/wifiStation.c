@@ -10,8 +10,8 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#define WIFI_STA_ESP_WIFI_SSID          "TP-LINK_5189"
-#define WIFI_STA_ESP_WIFI_PASS          "qaz123456."
+#define WIFI_STA_ESP_WIFI_SSID          "valon2.4G"
+#define WIFI_STA_ESP_WIFI_PASS          "cmpf42ea"
 #define WIFI_STA_ESP_MAXIMUM_RETRY      (5)
 
 /* FreeRTOS event group to signal when we are connected*/
