@@ -1,5 +1,5 @@
 /**
- * @file vlonGui_port.c
+ * @file vlGui_port.c
  * @author Weilong Shen (valonshen@foxmail.com)
  * @brief 
  * @version 0.1
@@ -20,10 +20,10 @@
  * limitations under the License.
  * 
  */
-#include "vlonGui.h"
-#include "vlonGui_port.h"
-#include <string.h>
+#include "vlGui.h"
+#include "vlGui_port.h"
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/times.h>
@@ -32,51 +32,51 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
-#include "vlonGui_ssd1306.h"
+#include "vlGui_ssd1306.h"
 
-struct vlonGui_driver_t vlonGui_driver;
+struct vlGui_driver_t vlGui_driver;
 
-void * vlonGui_malloc(uint32_t size)
+void * vlGui_malloc(uint32_t size)
 {
     return malloc(size);
 }
 
-void vlonGui_free(void *addr)
+void vlGui_free(void *addr)
 {
     return free(addr);
 }
 
-uint32_t vlonGui_getTime(void)
+uint32_t vlGui_getTime(void)
 {
     return xTaskGetTickCount();
 }
 
 void *
-vlonGui_protSemphrCreate(void)
+vlGui_protSemphrCreate(void)
 {
     return NULL;
 }
 
 void 
-vlonGui_protSemphrDestroy(void *semphr)
+vlGui_protSemphrDestroy(void *semphr)
 {
 
 }
 
 void 
-vlonGui_portSemphrTake(void *semphr, uint32_t delay_time)
+vlGui_portSemphrTake(void *semphr, uint32_t delay_time)
 {
 
 }
 
 void 
-vlonGui_portSemphrGive(void *semphr)
+vlGui_portSemphrGive(void *semphr)
 {
 
 }
 
-static vlonGui_color 
-vlonGui_portGetPixel(uint16_t x, uint16_t y)
+static vlGui_color 
+vlGui_portGetPixel(uint16_t x, uint16_t y)
 {
     if (ssd1306_getPixel((uint8_t)x, (uint8_t)y) == White) {
         return VLGUI_COLOR_WHITE;
@@ -85,13 +85,13 @@ vlonGui_portGetPixel(uint16_t x, uint16_t y)
     }
 }
 
-struct vlonGui_driver_t * vlonGui_portGetDriver(void)
+struct vlGui_driver_t * vlGui_portGetDriver(void)
 {
-    memset(&vlonGui_driver, 0, sizeof(vlonGui_driver));
-    vlonGui_driver.pInit = ssd1306_Init;
-    vlonGui_driver.pDrawPoint = ssd1306_DrawPixel;
-    vlonGui_driver.pGetPointColor = vlonGui_portGetPixel;
-    vlonGui_driver.pFresh = ssd1306_UpdateScreen;
+    memset(&vlGui_driver, 0, sizeof(vlGui_driver));
+    vlGui_driver.pInit = ssd1306_Init;
+    vlGui_driver.pDrawPoint = ssd1306_DrawPixel;
+    vlGui_driver.pGetPointColor = vlGui_portGetPixel;
+    vlGui_driver.pFresh = ssd1306_UpdateScreen;
 
-    return &vlonGui_driver;
+    return &vlGui_driver;
 }

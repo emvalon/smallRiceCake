@@ -1,6 +1,6 @@
-[submodule "submodules/vlonGui"]
-	path = submodules/vlonGui
-	url = git@github.com:emvalon/vlonGui.git
+[submodule "submodules/vlGui"]
+	path = submodules/vlGui
+	url = git@github.com:emvalon/vlGui.git
 [submodule "submodules/flexibleButton"]
 	path = submodules/flexibleButton
 	url = https://gitee.com/RT-Thread-Mirror/FlexibleButton.git
